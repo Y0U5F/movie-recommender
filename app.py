@@ -14,13 +14,31 @@ def clean_text(text):
     text = re.sub(r'[^\w\s]', '', text)  # إزالة علامات الترقيم
     return text.lower()
 
-# تحميل البيانات
+# تحميل البيانات بكفاءة
 @st.cache_data
 def load_data():
     data_path = os.path.join('Data', 'movies.csv.gz')  # المسار للملف المضغوط
     try:
-        # تحميل الملف المضغوط مع تحديد الأعمدة المطلوبة فقط
-        movies_data = pd.read_csv(data_path, compression='gzip', usecols=['index', 'title', 'genres', 'keywords', 'tagline', 'cast', 'director', 'release_year', 'overview'])
+        # اقرا أسماء الأعمدة أولاً
+        df = pd.read_csv(data_path, compression='gzip', nrows=0)
+        available_columns = df.columns.tolist()
+
+        # الأعمدة الأساسية المطلوبة
+        required_columns = ['index', 'title', 'genres', 'keywords', 'tagline', 'cast', 'director']
+        # الأعمدة الاختيارية
+        optional_columns = ['release_year', 'overview']
+
+        # تحقق من وجود الأعمدة الأساسية
+        missing_required = [col for col in required_columns if col not in available_columns]
+        if missing_required:
+            st.error(f"الأعمدة الأساسية التالية غير موجودة في الملف: {missing_required}")
+            return None
+
+        # الأعمدة اللي هنحملها فعلًا (الأساسية + الاختيارية الموجودة)
+        columns_to_load = required_columns + [col for col in optional_columns if col in available_columns]
+
+        # تحميل البيانات
+        movies_data = pd.read_csv(data_path, compression='gzip', usecols=columns_to_load)
         return movies_data
     except FileNotFoundError:
         st.error(f"ملف movies.csv.gz غير موجود في {data_path}. تأكد إنه موجود في المجلد 'Data'.")
