@@ -17,13 +17,16 @@ def clean_text(text):
 # تحميل البيانات
 @st.cache_data
 def load_data():
-    # تصحيح المسار للوصول لـ movies.csv في المجلد الأصلي
-    data_path = os.path.join('..', 'Data', 'movies.csv')
+    data_path = os.path.join('Data', 'movies.csv.gz')  # المسار للملف المضغوط
     try:
-        movies_data = pd.read_csv(data_path)
+        # تحميل الملف المضغوط مع تحديد الأعمدة المطلوبة فقط
+        movies_data = pd.read_csv(data_path, compression='gzip', usecols=['index', 'title', 'genres', 'keywords', 'tagline', 'cast', 'director', 'release_year', 'overview'])
         return movies_data
     except FileNotFoundError:
-        st.error(f"ملف movies.csv غير موجود في {data_path}. تأكد إنه موجود.")
+        st.error(f"ملف movies.csv.gz غير موجود في {data_path}. تأكد إنه موجود في المجلد 'Data'.")
+        return None
+    except Exception as e:
+        st.error(f"حصل خطأ أثناء تحميل البيانات: {str(e)}")
         return None
 
 # معالجة البيانات
